@@ -599,7 +599,7 @@ static void structfield(LexState *ls) {
         push_nil(ls);
     checknext(ls, ':');
     RETURNS_1(terratype(ls));
-    new_object(ls, "structentry", 2, &p);
+    new_object(ls, "structentry", 3, &p);
 }
 
 static void structbody(LexState *ls) {
