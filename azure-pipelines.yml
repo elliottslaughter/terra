@@ -6,74 +6,74 @@ jobs:
     matrix:
       ubuntu1604_llvm35:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 3.5
+        LLVM_VER: 3.5
       ubuntu1604_llvm38:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 3.8
+        LLVM_VER: 3.8
       ubuntu1604_llvm38_cmake:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 3.8
+        LLVM_VER: 3.8
         USE_CMAKE: 1
       ubuntu1604_llvm50:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 5.0
+        LLVM_VER: 5.0
       ubuntu1604_llvm50_cmake:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 5.0
+        LLVM_VER: 5.0
         USE_CMAKE: 1
       ubuntu1604_llvm60:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
       ubuntu1604_llvm60_cuda:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
         USE_CUDA: 1
       ubuntu1604_llvm60_cmake:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
         USE_CMAKE: 1
       ubuntu1604_llvm60_cmake_static_no_include:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
         USE_CMAKE: 1
         SLIB_INCLUDE_LLVM: 0
         SLIB_INCLUDE_LUAJIT: 0
       ubuntu1604_llvm60_cmake_dynamic:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
         USE_CMAKE: 1
         STATIC_LLVM: 0
         STATIC_LUAJIT: 0
       ubuntu1604_llvm70_cuda_cmake_static_no_include:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 7
+        LLVM_VER: 7
         USE_CUDA: 1
         USE_CMAKE: 1
         SLIB_INCLUDE_LLVM: 0
         SLIB_INCLUDE_LUAJIT: 0
       ubuntu1604_llvm70_cmake_dynamic:
         IMAGE: terralang/azure-pipelines:ubuntu-1604
-        LLVM_VERSION: 7
+        LLVM_VER: 7
         USE_CMAKE: 1
         STATIC_LLVM: 0
         STATIC_LUAJIT: 0
       ubuntu1804_llvm60:
         IMAGE: terralang/azure-pipelines:ubuntu-1804
-        LLVM_VERSION: 6.0
+        LLVM_VER: 6.0
       ubuntu1804_llvm70_cmake_static_no_include:
         IMAGE: terralang/azure-pipelines:ubuntu-1804
-        LLVM_VERSION: 7
+        LLVM_VER: 7
         USE_CMAKE: 1
         SLIB_INCLUDE_LLVM: 0
         SLIB_INCLUDE_LUAJIT: 0
 
   container: $[ variables['IMAGE'] ]
   variables:
-    LLVM_CONFIG: llvm-config-$[ variables['LLVM_VERSION'] ]
-    CLANG: clang-$[ variables['LLVM_VERSION'] ]
     CI: true
   steps:
   - script: |
+      export LLVM_CONFIG=llvm-config-$LLVM_VER
+      export CLANG=clang-$LLVM_VER
       sudo apt-get update -qq
       sudo apt-get install -qq build-essential cmake git software-properties-common wget
       sudo apt-get install -qq libncurses5-dev zlib1g-dev # FIXME: https://github.com/zdevito/terra/issues/307
