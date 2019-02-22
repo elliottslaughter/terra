@@ -1,5 +1,5 @@
 jobs:
-- job: ubuntu-16.04-llvm-3.5
+- job: ubuntu1604_llvm35
   pool:
     vmImage: ubuntu-16.04
   container: ubuntu:16.04
