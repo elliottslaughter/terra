@@ -52,7 +52,6 @@ jobs:
   steps:
   - script: ./azure-pipelines/build.sh
 
-jobs:
 - job: Ubuntu 18.04
   pool:
     vmImage: ubuntu-16.04
@@ -67,7 +66,6 @@ jobs:
   steps:
   - script: ./azure-pipelines/build.sh
 
-jobs:
 - job: macOS
   pool:
     vmImage: macOS-10.13
