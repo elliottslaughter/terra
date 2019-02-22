@@ -2,7 +2,7 @@ variables:
   CI: true
 
 jobs:
-- job: Ubuntu 16.04
+- job: ubuntu1604
   pool:
     vmImage: ubuntu-16.04
   strategy:
@@ -52,7 +52,7 @@ jobs:
   steps:
   - script: ./azure-pipelines/build.sh
 
-- job: Ubuntu 18.04
+- job: ubuntu1804
   pool:
     vmImage: ubuntu-16.04
   strategy:
@@ -66,7 +66,7 @@ jobs:
   steps:
   - script: ./azure-pipelines/build.sh
 
-- job: macOS
+- job: macos
   pool:
     vmImage: macOS-10.13
   strategy:
