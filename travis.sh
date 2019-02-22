@@ -3,10 +3,6 @@
 set -e
 set -x
 
-whoami
-apt-get update -qq
-apt-get install -qq build-essential cmake sudo
-
 if [[ $(uname) = Linux ]]; then
   sudo apt-get update -qq
   if [[ $LLVM_CONFIG = llvm-config-7 ]]; then
