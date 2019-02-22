@@ -2,7 +2,7 @@ jobs:
 - job: Linux
   pool:
     vmImage: ubuntu-16.04
-  container: ubuntu:16.04
+  container: terralang:azure-pipelines:ubuntu-1604
   variables:
     LLVM_CONFIG: llvm-config-3.5
     CLANG: clang-3.5
