@@ -1,5 +1,5 @@
 jobs:
-- job: ubuntu1604_llvm35
+- job: Linux
   pool:
     vmImage: ubuntu-16.04
   container: ubuntu:16.04
@@ -7,4 +7,7 @@ jobs:
     LLVM_CONFIG: llvm-config-3.5
     CLANG: clang-3.5
   steps:
-  - script: ./travis.sh
+  - script: |
+      apt-get update -qq
+      apt-get install -qq build-essential cmake sudo
+      ./travis.sh
