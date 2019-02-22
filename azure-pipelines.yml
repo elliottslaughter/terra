@@ -9,5 +9,5 @@ jobs:
   steps:
   - script: |
       sudo apt-get update -qq
-      sudo apt-get install -qq build-essential cmake
+      sudo apt-get install -qq build-essential cmake wget
       ./travis.sh
