@@ -1,0 +1,7 @@
+#Terra build commands
+docker build --tag terra:latest . #build the docker image
+docker run -it terra:latest #run the docker image
+
+#Build-box build commands
+docker build --tag terra/build-box:latest docker/build-box # build the build box for universal linux builds
+docker run -v `pwd`:/io terra/build-box:latest bash -c "cd /io && /hbb/bin/setuser builder ./hbb-builder.sh" # build with build box
