@@ -21,10 +21,10 @@ popd
 
 mkdir -p llvm-project/build
 pushd llvm-project/build
-env CFLAGS="-g -O2 -I/hbb_exe/include -fPIC" CXXFLAGS="-g -O2 -I/hbb_exe/include -fPIC" LDFLAGS="-fPIC" \
-  bash -c "cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS='clang;libcxx;libcxxabi' -DBUILD_SHARED_LIBS=OFF \
+env CFLAGS="-g -I/hbb_exe/include -fPIC" CXXFLAGS="-g -I/hbb_exe/include -fPIC" LDFLAGS="-fPIC" \
+  bash -c "cmake -GNinja -DCMAKE_BUILD_TYPE=MinSizeRel -DLLVM_ENABLE_PROJECTS='clang' -DBUILD_SHARED_LIBS=OFF \
   -DBUILD_STATIC_LIBS=ON -DLLVM_BUILD_TOOLS=OFF -DCMAKE_INSTALL_PREFIX=/hbb_exe -S ../llvm -B ./ \
-  -DCMAKE_C_FLAGS='-g -O2 -I/hbb_exe/include -fPIC' -DCMAKE_CXX_FLAGS='-g -O2 -I/hbb_exe/include -fPIC' -DCMAKE_LD_FLAGS='-fPIC' && \
+  -DCMAKE_C_FLAGS='-g -I/hbb_exe/include -fPIC' -DCMAKE_CXX_FLAGS='-g -I/hbb_exe/include -fPIC' -DCMAKE_LD_FLAGS='-fPIC' && \
   cmake --build . -j $THREADS && \
   cmake --build . --target install"
 popd
