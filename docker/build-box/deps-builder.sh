@@ -9,7 +9,7 @@ set -x
 CPUCOUNT=$(cat /proc/cpuinfo | grep siblings | head -n 1 | tr -d 'siblings\t: ')
 MEMCOUNT=$(cat /proc/meminfo | grep MemAvailable | head -n 1\
            | tr -d 'MemAvailable:\t' | tr -d " kB")
-MEMCOUNT=$(expr $MEMCOUNT / 6000000)
+MEMCOUNT=$(expr $MEMCOUNT / 3000000)
 THREADS=$(printf "$CPUCOUNT\n$MEMCOUNT" | sort -n | head -n 1)
 echo building on $THREADS threads
 
