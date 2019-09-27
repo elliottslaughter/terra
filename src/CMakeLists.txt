@@ -244,6 +244,9 @@ target_link_libraries(TerraLibraryShared
     ${LUAJIT_LIBRARIES}
     ${ALL_LLVM_LIBRARIES}
     ${LLVM_SYSTEM_LIBRARIES}
+    shlwapi.lib
+    version.lib
+    Dbghelp.lib
 )
 
 if(APPLE)
@@ -334,6 +337,9 @@ else()
       ${LUAJIT_LIBRARIES}
       ${ALL_LLVM_LIBRARIES}
       ${LLVM_SYSTEM_LIBRARIES}
+      shlwapi.lib
+      version.lib
+      Dbghelp.lib
   )
 endif()
 
