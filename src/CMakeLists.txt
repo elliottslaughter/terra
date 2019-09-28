@@ -253,6 +253,13 @@ if(APPLE)
   target_link_libraries(TerraLibraryShared PRIVATE -single_module)
 endif()
 
+if(WIN32)
+  target_link_libraries(TerraLibraryShared
+    PRIVATE
+      shlwapi.lib dbghelp.lib version.lib
+  )
+endif()
+
 ###
 ### Terra Executable
 ###
@@ -340,6 +347,13 @@ else()
       shlwapi.lib
       version.lib
       Dbghelp.lib
+  )
+endif()
+
+if(WIN32)
+  target_link_libraries(TerraExecutable
+    PRIVATE
+      shlwapi.lib dbghelp.lib version.lib
   )
 endif()
 
