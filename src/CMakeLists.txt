@@ -150,6 +150,7 @@ if(WIN32)
   )
   target_compile_definitions(TerraObjectFiles
     PRIVATE
+      _CRT_SECURE_NO_DEPRECATE
       NOMINMAX
   )
 else()
@@ -230,10 +231,9 @@ add_dependencies(TerraLibrary LLVMObjectFiles)
 add_dependencies(TerraLibraryShared LuaJIT)
 add_dependencies(TerraLibraryShared LLVMObjectFiles)
 
-set_target_properties(TerraLibrary PROPERTIES PREFIX "")
 set_target_properties(TerraLibraryShared PROPERTIES PREFIX "")
 
-set_target_properties(TerraLibrary PROPERTIES OUTPUT_NAME terra)
+set_target_properties(TerraLibrary PROPERTIES OUTPUT_NAME terra_s)
 set_target_properties(TerraLibraryShared PROPERTIES OUTPUT_NAME terra)
 
 set_target_properties(TerraLibrary PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
@@ -254,6 +254,16 @@ if(WIN32)
   target_link_libraries(TerraLibraryShared
     PRIVATE
       shlwapi.lib dbghelp.lib version.lib
+  )
+  target_link_options(TerraLibraryShared
+    PRIVATE
+      /EXPORT:terra_init
+      /EXPORT:terra_initwithoptions
+      /EXPORT:terra_load
+      /EXPORT:terra_loadfile
+      /EXPORT:terra_loadbuffer
+      /EXPORT:terra_loadstring
+      /EXPORT:terra_llvmshutdown
   )
 endif()
 
@@ -348,6 +358,16 @@ if(WIN32)
   target_link_libraries(TerraExecutable
     PRIVATE
       shlwapi.lib dbghelp.lib version.lib
+  )
+  target_link_options(TerraExecutable
+    PRIVATE
+      /EXPORT:terra_init
+      /EXPORT:terra_initwithoptions
+      /EXPORT:terra_load
+      /EXPORT:terra_loadfile
+      /EXPORT:terra_loadbuffer
+      /EXPORT:terra_loadstring
+      /EXPORT:terra_llvmshutdown
   )
 endif()
 
