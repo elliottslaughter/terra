@@ -23,7 +23,11 @@ if [[ $CHECK_CLANG_FORMAT -eq 1 ]]; then
 fi
 
 if [[ -n $DOCKER_BUILD ]]; then
-    ./docker/build.sh $DOCKER_BUILD
+    ./docker/build.sh $DOCKER_BUILD ${DOCKER_PUSH:-TRAVIS_TAG}
+    if [[ -n ${DOCKER_PUSH+x} && -n $TRAVIS_TAG ]]; then
+        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        docker push terralang/terra:$TRAVIS_TAG
+    fi
     exit 0
 fi
 
