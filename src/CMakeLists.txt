@@ -232,12 +232,23 @@ set_target_properties(TerraLibraryShared PROPERTIES OUTPUT_NAME terra)
 set_target_properties(TerraLibrary PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 set_target_properties(TerraLibraryShared PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
-target_link_libraries(TerraLibraryShared
-  PRIVATE
-    ${LUAJIT_LIBRARIES}
-    ${ALL_LLVM_LIBRARIES}
-    ${LLVM_SYSTEM_LIBRARIES}
-)
+if(UNIX AND NOT APPLE AND LLVM_VERSION GREATER 18)
+  target_link_libraries(TerraLibraryShared
+    PRIVATE
+      ${LUAJIT_LIBRARIES}
+      -Wl,--start-group
+      ${ALL_LLVM_LIBRARIES}
+      -Wl,--end-group
+      ${LLVM_SYSTEM_LIBRARIES}
+  )
+else()
+  target_link_libraries(TerraLibraryShared
+    PRIVATE
+      ${LUAJIT_LIBRARIES}
+      ${ALL_LLVM_LIBRARIES}
+      ${LLVM_SYSTEM_LIBRARIES}
+  )
+endif()
 
 if(APPLE)
   target_link_libraries(TerraLibraryShared PRIVATE -single_module)
@@ -355,7 +366,9 @@ elseif(UNIX)
       TerraLibrary
       -Wl,--no-whole-archive
       ${LUAJIT_LIBRARIES}
+      -Wl,--start-group
       ${ALL_LLVM_LIBRARIES}
+      -Wl,--end-group
       ${LLVM_SYSTEM_LIBRARIES}
   )
 else()
