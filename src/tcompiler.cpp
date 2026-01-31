@@ -3368,7 +3368,7 @@ struct FunctionEmitter {
         ValueToValueMapTy VMap;
         DebugInfoFinder DIFinder;
         BasicBlock *NewBB =
-#if LLVM_VERSION < 20
+#if LLVM_VERSION < 200
                 CloneBasicBlock(BB, VMap, "defer", fstate->func, nullptr, &DIFinder);
 #else
                 // TODO: Check if DIFinder needs to be used in a different function.

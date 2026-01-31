@@ -37,8 +37,8 @@ elif [[ $(uname) = Darwin ]]; then
   if [[ $LLVM_VERSION = 20 ]]; then
     curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-20.1.8/clang+llvm-20.1.8-${arch}-apple-darwin.tar.xz
     tar xf clang+llvm-20.1.8-${arch}-apple-darwin.tar.xz
-    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/llvm-config llvm-config-19
-    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/clang clang-19
+    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/llvm-config llvm-config-20
+    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/clang clang-20
     export CMAKE_PREFIX_PATH=$PWD/clang+llvm-20.1.8-${arch}-apple-darwin
   elif [[ $LLVM_VERSION = 19 ]]; then
     curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-19.1.7/clang+llvm-19.1.7-${arch}-apple-darwin.tar.xz

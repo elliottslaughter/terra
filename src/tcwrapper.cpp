@@ -828,13 +828,21 @@ static void initializeclang(terra_State *T, llvm::MemoryBuffer *membuffer,
                             llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS) {
     // CompilerInstance will hold the instance of the Clang compiler for us,
     // managing the various objects needed to run the compiler.
+#if LLVM_VERSION < 200
     TheCompInst->createDiagnostics();
+#else
+    TheCompInst->createDiagnostics(*FS);
+#endif
 
     CompilerInvocation::CreateFromArgs(TheCompInst->getInvocation(), args,
                                        TheCompInst->getDiagnostics());
     // need to recreate the diagnostics engine so that it actually listens to warning
     // flags like -Wno-deprecated this cannot go before CreateFromArgs
+#if LLVM_VERSION < 200
     TheCompInst->createDiagnostics();
+#else
+    TheCompInst->createDiagnostics(*FS);
+#endif
     std::shared_ptr<TargetOptions> to(new TargetOptions(TheCompInst->getTargetOpts()));
 
     TargetInfo *TI = TargetInfo::CreateTargetInfo(TheCompInst->getDiagnostics(), to);
