@@ -34,7 +34,13 @@ if [[ $(uname) = Linux ]]; then
   exit 1
 
 elif [[ $(uname) = Darwin ]]; then
-  if [[ $LLVM_VERSION = 19 ]]; then
+  if [[ $LLVM_VERSION = 20 ]]; then
+    curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-20.1.8/clang+llvm-20.1.8-${arch}-apple-darwin.tar.xz
+    tar xf clang+llvm-20.1.8-${arch}-apple-darwin.tar.xz
+    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/llvm-config llvm-config-19
+    ln -s clang+llvm-20.1.8-${arch}-apple-darwin/bin/clang clang-19
+    export CMAKE_PREFIX_PATH=$PWD/clang+llvm-20.1.8-${arch}-apple-darwin
+  elif [[ $LLVM_VERSION = 19 ]]; then
     curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-19.1.7/clang+llvm-19.1.7-${arch}-apple-darwin.tar.xz
     tar xf clang+llvm-19.1.7-${arch}-apple-darwin.tar.xz
     ln -s clang+llvm-19.1.7-${arch}-apple-darwin/bin/llvm-config llvm-config-19
@@ -101,7 +107,11 @@ elif [[ $(uname) = Darwin ]]; then
   export PATH=$PWD:$PATH
 
 elif [[ $(uname) = MINGW* ]]; then
-  if [[ $LLVM_VERSION = 19 ]]; then
+  if [[ $LLVM_VERSION = 20 ]]; then
+    curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-20.1.8/clang+llvm-20.1.8-${arch}-windows-msvc17.7z
+    7z x -y clang+llvm-20.1.8-${arch}-windows-msvc17.7z
+    export CMAKE_PREFIX_PATH=$PWD/clang+llvm-20.1.8-${arch}-windows-msvc17
+  elif [[ $LLVM_VERSION = 19 ]]; then
     curl -L -O https://github.com/terralang/llvm-build/releases/download/llvm-19.1.7/clang+llvm-19.1.7-${arch}-windows-msvc17.7z
     7z x -y clang+llvm-19.1.7-${arch}-windows-msvc17.7z
     export CMAKE_PREFIX_PATH=$PWD/clang+llvm-19.1.7-${arch}-windows-msvc17
@@ -212,8 +222,8 @@ if [[ $(uname) != Darwin ]]; then
     popd
 fi
 
-# Only deploy builds with LLVM 13 (macOS) and 11 (Windows).
-if [[ (( $(uname) == Darwin && $LLVM_VERSION = 18 ) || ( $(uname) == MINGW* && $LLVM_VERSION = 11 && $USE_CUDA -eq 1 )) && $SLIB_INCLUDE_LLVM -eq 1 && $TERRA_LUA = luajit ]]; then
+# Only deploy builds with LLVM 20.
+if [[ $LLVM_VERSION = 20 && ( ! ( $(uname) == MINGW* ) && $USE_CUDA -eq 1 ) && $SLIB_INCLUDE_LLVM -eq 1 && $TERRA_LUA = luajit ]]; then
   RELEASE_NAME=terra-`uname | sed -e s/Darwin/OSX/ | sed -e s/MINGW.*/Windows/`-${arch}-`git rev-parse --short HEAD`
   mv install $RELEASE_NAME
   if [[ $(uname) = MINGW* ]]; then
