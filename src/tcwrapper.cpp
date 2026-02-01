@@ -768,10 +768,19 @@ void InitHeaderSearchFlagsAndArgs(std::string const &TripleStr, HeaderSearchOpti
     using namespace llvm::sys;
 
     IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+#if LLVM_VERSION < 210
     IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts(new DiagnosticOptions());
+#else
+    DiagnosticOptions DiagOpts;
+#endif
     auto *DiagsBuffer = new IgnoringDiagConsumer();
-    std::unique_ptr<DiagnosticsEngine> Diags(
-            new DiagnosticsEngine(DiagID, &*DiagOpts, DiagsBuffer));
+    std::unique_ptr<DiagnosticsEngine> Diags(new DiagnosticsEngine(DiagID,
+#if LLVM_VERSION < 210
+                                                                   &*DiagOpts,
+#else
+                                                                   DiagOpts,
+#endif
+                                                                   DiagsBuffer));
 
     auto argslist = {"dummy",
                      "-x",
@@ -843,9 +852,17 @@ static void initializeclang(terra_State *T, llvm::MemoryBuffer *membuffer,
 #else
     TheCompInst->createDiagnostics(*FS);
 #endif
+#if LLVM_VERSION < 210
     std::shared_ptr<TargetOptions> to(new TargetOptions(TheCompInst->getTargetOpts()));
+#endif
 
-    TargetInfo *TI = TargetInfo::CreateTargetInfo(TheCompInst->getDiagnostics(), to);
+    TargetInfo *TI = TargetInfo::CreateTargetInfo(TheCompInst->getDiagnostics(),
+#if LLVM_VERSION < 210
+                                                  to
+#else
+                                                  TheCompInst->getTargetOpts()
+#endif
+    );
     TheCompInst->setTarget(TI);
 
     TheCompInst->createFileManager(FS);
@@ -932,7 +949,12 @@ static void optimizemodule(TerraTarget *TT, llvm::Module *M) {
     }
 
     M->setTargetTriple(
-            TT->Triple);  // suppress warning that occur due to unmatched os versions
+#if LLVM_VERSION < 210
+            TT->Triple
+#else
+            llvm::Triple(TT->Triple)
+#endif
+    );  // suppress warning that occur due to unmatched os versions
 #if LLVM_VERSION < 170
     PassManager opt;
     llvmutil_addtargetspecificpasses(&opt, TT->tm);
