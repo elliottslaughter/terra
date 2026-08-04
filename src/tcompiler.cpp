@@ -3831,19 +3831,82 @@ static bool MCJITShouldCopy(GlobalValue *G, void *data) {
 static bool SaveSharedObject(TerraCompilationUnit *CU, Module *M,
                              std::vector<const char *> *args, const char *filename);
 
+// Remove the '\01' assembler renaming tag LLVM puts on symbols that carry an explicit asm
+// label, so the name matches what is actually in the symbol table.
+static StringRef StripAsmRenamingTag(StringRef Name) {
+#if LLVM_VERSION < 180
+    if (Name.startswith("\01")) Name = Name.substr(1);
+#else
+    if (Name.starts_with("\01")) Name = Name.substr(1);
+#endif
+    return Name;
+}
+
+// Will the JIT be able to bind this symbol? Look in the same two places RuntimeDyld does:
+// modules already added to the ExecutionEngine (Terra functions compiled earlier, or a
+// module supplied by terralib.linkllvm) and the host process, which covers libraries
+// loaded with terralib.linklibrary.
+static bool JITSymbolIsDefined(TerraCompilationUnit *CU, StringRef Name) {
+    if (CU->ee->getPointerToNamedFunction(Name.str(), false /* AbortOnFailure */))
+        return true;
+    return sys::DynamicLibrary::SearchForAddressOfSymbol(Name.str()) != NULL;
+}
+
+// Terra compiles a call to an external function into a plain declaration and leaves the
+// binding to the JIT's linker. When the symbol does not exist anywhere, RuntimeDyld
+// resolves it to null rather than complaining, so the first call jumps to address zero
+// and takes the whole process down with it -- no indication of which symbol was missing.
+// Check the declarations before handing the module to the JIT so this is an ordinary Lua
+// error that pcall can catch.
+//
+// Only code we are about to JIT goes through here. terralib.saveobj deliberately leaves
+// symbols undefined for whatever links the object afterwards, and does not use this path.
+static void CheckJITSymbolsAreDefined(TerraCompilationUnit *CU, Module *M,
+                                      StringRef ContextName) {
+    std::vector<std::string> undefined;
+    for (Function &F : *M) {
+        if (!F.isDeclaration() || F.isIntrinsic() || F.use_empty()) continue;
+        // extern_weak is allowed to resolve to null; that is the point of it.
+        if (F.hasExternalWeakLinkage()) continue;
+        StringRef name = StripAsmRenamingTag(F.getName());
+        // "module:symbol" names are resolved by the GPU backends against a device
+        // library, never against the host process.
+        if (name.find(':') != StringRef::npos) continue;
+        if (JITSymbolIsDefined(CU, name)) continue;
+        undefined.push_back(name.str());
+    }
+    if (undefined.empty()) return;
+
+    std::string msg;
+    raw_string_ostream out(msg);
+    out << "JIT compilation of '" << StripAsmRenamingTag(ContextName)
+        << "' failed: undefined symbol";
+    if (undefined.size() > 1) out << "s";
+    for (size_t i = 0; i < undefined.size(); i++)
+        out << (i == 0 ? " '" : ", '") << undefined[i] << "'";
+    out << ". A function was declared extern but no definition was found in this process."
+           " Check that the library providing it has been loaded with"
+           " terralib.linklibrary.";
+    out.flush();
+    terra_reporterror(CU->T, "%s\n", msg.c_str());
+}
+
 static void *JITGlobalValue(TerraCompilationUnit *CU, GlobalValue *gv) {
     InitializeJIT(CU);
     ExecutionEngine *ee = CU->ee;
     if (gv->isDeclaration()) {
-        StringRef name = gv->getName();
-#if LLVM_VERSION < 180
-        if (name.startswith("\01"))  // remove asm renaming tag before looking for symbol
-            name = name.substr(1);
-#else
-        if (name.starts_with("\01"))  // remove asm renaming tag before looking for symbol
-            name = name.substr(1);
-#endif
-        return ee->getPointerToNamedFunction(name);
+        StringRef name = StripAsmRenamingTag(gv->getName());
+        // Ask without AbortOnFailure: the default aborts the process with
+        // report_fatal_error, which the user cannot catch.
+        void *ptr = ee->getPointerToNamedFunction(name, false /* AbortOnFailure */);
+        if (!ptr && name.find(':') == StringRef::npos)
+            terra_reporterror(CU->T,
+                              "JIT compilation of '%s' failed: undefined symbol. A "
+                              "function was declared extern but no definition was found "
+                              "in this process. Check that the library providing it has "
+                              "been loaded with terralib.linklibrary.\n",
+                              name.str().c_str());
+        return ptr;
     }
     void *ptr = GetGlobalValueAddress(CU, gv->getName());
     if (ptr) {
@@ -3852,6 +3915,7 @@ static void *JITGlobalValue(TerraCompilationUnit *CU, GlobalValue *gv) {
     llvm::ValueToValueMapTy VMap;
     Module *m = llvmutil_extractmodulewithproperties(gv->getName(), gv->getParent(), &gv,
                                                      1, MCJITShouldCopy, CU, VMap);
+    CheckJITSymbolsAreDefined(CU, m, gv->getName());
 
     if (CU->T->options.debug > 1) {
         llvm::SmallString<256> tmpname;

@@ -192,6 +192,20 @@ Create a Terra function bound to an externally defined function. Example:
 
     local atoi = terralib.externfunction("atoi",{rawstring} -> {int})
 
+The symbol is not looked up when the declaration is created, so it is fine to declare a
+function before the thing that defines it exists. The definition may arrive later from
+`linklibrary`, `linkllvm`, or another Terra function compiled in the same process.
+
+The symbol must resolve by the time Terra JIT compiles code that calls it. If it does not,
+Terra raises an error naming the missing symbol, which can be caught with `pcall`:
+
+    local missing = terralib.externfunction("no_such_symbol",{} -> int)
+    terra usesit() return missing() end
+    local ok, err = pcall(usesit) -- ok is false, err names "no_such_symbol"
+
+This check applies only to JIT compilation. `saveobj` still emits undefined symbols, since
+it is the job of whatever links the resulting object to supply them.
+
 ---
 
     myfunction(arg0,...,argN)
