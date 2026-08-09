@@ -20,6 +20,8 @@ local shapes = {
   fx2 = { float, float },                       -- 8 bytes, all float
   dx2 = { double, double },                     -- 16 bytes, all double
   dx3 = { double, double, double },             -- 24 bytes: too big for registers
+  dx5 = { double, double, double, double,       -- five members: past AArch64's
+          double },                             --   HFA limit but not PPC64's
   i64x5 = { int64, int64, int64, int64, int64 },-- 40 bytes: indirect everywhere
 }
 
@@ -107,8 +109,32 @@ for _, t in ipairs { "aarch64-unknown-linux-gnu", "aarch64-apple-darwin" } do
   check(t, sigs, "id_fx2", "pass an all-float pair as an array", has("[2 x float]"))
   check(t, sigs, "id_dx3", "keep a three-double HFA in registers",
         returns("%[3 x double%]"))
+  check(t, sigs, "id_dx5", "spill a five-member HFA, which is past AArch64's limit "
+        .. "of four (PPC64 allows eight)", has("sret"))
   check(t, sigs, "id_i64x5", "be passed indirectly", has("sret"))
   check(t, sigs, "id_i64x5", "not use byval", lacks("byval"))
+end
+
+-- PPC64 ELFv2 runs through the same classifier as AArch64 but with its own
+-- limits, so the two have to stay distinguishable: a homogeneous float
+-- aggregate rides in registers up to eight members rather than four, and
+-- aggregates are packed as arrays rather than SysV eightbyte pairs. Returns
+-- still only get two registers, so anything past 16 bytes is indirect.
+do
+  local t = "powerpc64le-unknown-linux-gnu"
+  local sigs = irfor(t)
+  check(t, sigs, "id_i8x3", "be coerced to i24", returns("i24"))
+  check(t, sigs, "id_fx2", "pass an all-float pair as an array",
+        returns("%[2 x float%]"))
+  check(t, sigs, "id_dx2", "pass an all-double pair as an array, not as the SysV "
+        .. "pair of doubles", returns("%[2 x double%]"))
+  check(t, sigs, "id_dx3", "keep a three-double HFA in registers",
+        returns("%[3 x double%]"))
+  check(t, sigs, "id_dx5", "keep a five-member HFA in registers, where AArch64 "
+        .. "spills it", returns("%[5 x double%]"))
+  check(t, sigs, "id_i32x3", "return 12 bytes in registers", lacks("sret"))
+  check(t, sigs, "id_i64x5", "return 40 bytes indirectly, since a return gets "
+        .. "only two registers", has("sret"))
 end
 
 assert(failures == 0, failures .. " calling convention checks failed")
