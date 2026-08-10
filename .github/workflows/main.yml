@@ -318,33 +318,49 @@ jobs:
           DOCKER_CUDA: ${{ matrix.cuda }}
           DOCKER_VARIANT: ${{ matrix.variant }}
           DOCKER_TEST: ${{ matrix.test }}
-  # PPC64le has no native runner and no LuaJIT support, so it is the one
-  # configuration we can only reach through emulation and Moonjit. It is slow
-  # and historically was not reliable enough to run the suite, so it is kept
-  # out of fail-fast and off the critical path.
-  multiarch:
-    name: Multiarch (${{ matrix.distro }}, ${{ matrix.arch }}, llvm-${{ matrix.llvm }}, ${{ matrix.variant }})
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        distro: ['ubuntu-24.04']
-        arch: ['ppc64le']
-        llvm: ['17.0.1']
-        variant: ['prebuilt']
-        cuda: ['0']
-        test: ['1']
-    steps:
-      - uses: actions/checkout@v6
-      - run: ./travis.sh
-        env:
-          DOCKER_DISTRO: ${{ matrix.distro }}
-          DOCKER_ARCH: ${{ matrix.arch }}
-          DOCKER_LLVM: ${{ matrix.llvm }}
-          DOCKER_CUDA: ${{ matrix.cuda }}
-          DOCKER_VARIANT: ${{ matrix.variant }}
-          DOCKER_TEST: ${{ matrix.test }}
+  # PPC64le has no native runner and no LuaJIT support, so emulation plus
+  # Moonjit is the only way to reach it. Still disabled, but the reason is now
+  # measured rather than remembered. Re-tried 2026-08-09 with the config below,
+  # on QEMU 10.2.3 by way of tonistiigi/binfmt (see travis.sh; the
+  # multiarch/qemu-user-static image this used to call has not been published
+  # since 2022, so earlier attempts were all testing a ~2022 QEMU):
+  #
+  #   * The build succeeds and the whole suite runs in about 8 minutes, so
+  #     speed is not the obstacle it used to be.
+  #   * 178 of 561 tests fail, all but 5 with "qemu: uncaught target signal 11".
+  #     Among them are cconv.t, cconv_more.t and cconv_array.t, which pass on
+  #     real PPC64 hardware, so these are emulation artifacts and not ABI bugs.
+  #   * cconv_cross_target.t crashes too, and it only asks Terra to emit IR for
+  #     other targets without executing any of it. So what QEMU cannot survive
+  #     is running Terra at all, most likely the JIT, rather than anything
+  #     specific to the PPC64 calling convention.
+  #
+  # A job that fails 178 tests every run cannot detect a regression, so there
+  # is nothing to gain by enabling it until that is fixed upstream.
+  #
+  # multiarch:
+  #   name: Multiarch (${{ matrix.distro }}, ${{ matrix.arch }}, llvm-${{ matrix.llvm }}, ${{ matrix.variant }})
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       distro: ['ubuntu-24.04']  # 20.04 has no CMake new enough; see docker/install_script.sh
+  #       arch: ['ppc64le']
+  #       llvm: ['17.0.1']          # newest PPC64le prebuilt in terralang/llvm-build
+  #       variant: ['prebuilt']
+  #       cuda: ['0']
+  #       test: ['1']
+  #   steps:
+  #     - uses: actions/checkout@v6
+  #     - run: ./travis.sh
+  #       env:
+  #         DOCKER_DISTRO: ${{ matrix.distro }}
+  #         DOCKER_ARCH: ${{ matrix.arch }}
+  #         DOCKER_LLVM: ${{ matrix.llvm }}
+  #         DOCKER_CUDA: ${{ matrix.cuda }}
+  #         DOCKER_VARIANT: ${{ matrix.variant }}
+  #         DOCKER_TEST: ${{ matrix.test }}
   freebsd:
     name: FreeBSD (llvm-${{ matrix.llvm }})
     runs-on: ubuntu-latest
