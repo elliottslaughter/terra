@@ -31,6 +31,14 @@ arch=$(uname -m | sed -e s/ppc64le/powerpc64le/)
 packages=(
     build-essential gdb git wget
 )
+# Kitware only publishes x86_64 and aarch64 binaries, so anything else has to
+# take CMake from the distro, which must therefore supply one new enough for
+# the cmake_minimum_required in our top-level CMakeLists.txt.
+if [[ $(uname -m) != x86_64 && $(uname -m) != aarch64 ]]; then
+    packages+=(
+        cmake
+    )
+fi
 if [[ $variant = "package" || $variant = "upstream" ]]; then
     packages+=(
         llvm-$llvm-dev libclang-$llvm-dev clang-$llvm
@@ -65,10 +73,14 @@ fi
 
 apt-get install -qq "${packages[@]}"
 
-# Use an upstream CMake so that we can control the exact version.
-wget -nv https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-$(uname -m).tar.gz
-tar xf cmake-3.26.4-linux-$(uname -m).tar.gz
-export PATH="$PATH:$PWD/cmake-3.26.4-linux-$(uname -m)/bin"
+# Use an upstream CMake so that we can control the exact version, where one is
+# published for this architecture; otherwise the distro's is already installed.
+if [[ $(uname -m) = x86_64 || $(uname -m) = aarch64 ]]; then
+    wget -nv https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-linux-$(uname -m).tar.gz
+    tar xf cmake-3.26.4-linux-$(uname -m).tar.gz
+    export PATH="$PATH:$PWD/cmake-3.26.4-linux-$(uname -m)/bin"
+fi
+cmake --version
 
 if [[ $variant = "prebuilt" ]]; then
     wget -nv https://github.com/terralang/llvm-build/releases/download/llvm-$llvm/clang+llvm-$llvm-$arch-linux-gnu.tar.xz

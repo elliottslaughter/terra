@@ -21,7 +21,10 @@ fi
 
 if [[ -n $DOCKER_DISTRO ]]; then
     if [[ -n $DOCKER_ARCH ]]; then
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        # tonistiigi/binfmt is what Docker's own buildx uses and it tracks
+        # current QEMU releases; multiarch/qemu-user-static was last published
+        # in 2022, so it pins an old QEMU no matter when CI runs.
+        docker run --rm --privileged tonistiigi/binfmt --install all
     fi
 
     ./docker/build.sh "$DOCKER_DISTRO" "$DOCKER_ARCH" "$DOCKER_LLVM" "$DOCKER_LUA" "$DOCKER_STATIC" "$DOCKER_SLIB" "$DOCKER_CUDA" "$DOCKER_VARIANT" "$DOCKER_TEST"
